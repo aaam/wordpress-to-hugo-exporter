@@ -28,11 +28,11 @@ class Hugo_Export
 {
     protected $_tempDir = null;
     private $zip_folder = 'hugo-export/'; //folder zip file extracts to
-    private $post_folder = '_posts/'; //folder to place posts within
+    private $post_folder = 'post/'; //folder to place posts within
 
     public $rename_options = array('site', 'blog'); //strings to strip from option keys on export
 
-    public $options = array( //array of wp_options value to convert to _config.yml
+    public $options = array( //array of wp_options value to convert to config.yaml
         'name',
         'description',
         'url'
@@ -124,7 +124,7 @@ class Hugo_Export
 
         //turns permalink into 'url' format, since Hugo supports redirection on per-post basis
         if ('page' !== $post->post_type) {
-            $output['url'] = str_replace(home_url(), '', get_permalink($post));
+            $output['url'] = urldecode(str_replace(home_url(), '', get_permalink($post)));
         }
 
         //convert traditional post_meta values, hide hidden values
@@ -231,7 +231,7 @@ class Hugo_Export
             // Hugo doesn't like word-wrapped permalinks
             $output = Spyc::YAMLDump($meta, false, 0);
 
-            $output .= "---\n";
+            $output .= "\n---\n";
             $output .= $this->convert_content($post);
             $this->write($output, $post);
         }
@@ -287,7 +287,7 @@ class Hugo_Export
     }
 
     /**
-     * Convert options table to _config.yml file
+     * Convert options table to config.yaml file
      */
     function convert_options()
     {
@@ -324,7 +324,7 @@ class Hugo_Export
         //strip starting "---"
         $output = substr($output, 4);
 
-        $wp_filesystem->put_contents($this->dir . '_config.yml', $output);
+        $wp_filesystem->put_contents($this->dir . 'config.yaml', $output);
     }
 
     /**
@@ -336,10 +336,10 @@ class Hugo_Export
         global $wp_filesystem;
 
         if (get_post_type($post) == 'page') {
-            $wp_filesystem->mkdir($this->dir . $post->post_name);
-            $filename = $post->post_name . '/index.md';
+            $wp_filesystem->mkdir(urldecode($this->dir . $post->post_name));
+            $filename = urldecode($post->post_name . '/index.md');
         } else {
-            $filename = $this->post_folder . date('Y-m-d', strtotime($post->post_date)) . '-' . $post->post_name . '.md';
+            $filename = $this->post_folder . date('Y-m-d', strtotime($post->post_date)) . '-' . urldecode($post->post_name) . '.md';
         }
 
         $wp_filesystem->put_contents($this->dir . $filename, $output);
